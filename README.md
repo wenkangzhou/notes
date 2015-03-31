@@ -300,10 +300,10 @@ klass()实现中三个令人关注且独特的部分：
 		return child;
 	}
 
-	var cake = mix{
+	var cake = mix(
 		{egg:2,large:true},
 		{flour:"3 cups"}
-	}
+	)
 ```
 ###借用方法
 ```javascript
