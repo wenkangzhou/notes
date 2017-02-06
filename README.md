@@ -2,6 +2,9 @@
 /*************
      笔记
 **************/
+/*************
+     笔记
+**************/
 ECMAScript包含数据属性和访问属性
 	1.数据属性：4个特性[[Configurable]]、[[Enumerable]]、[[Writable]]、[[Value]] 
 	例子：
@@ -48,8 +51,8 @@ ECMAScript包含数据属性和访问属性
 	alert(book.edition);//2
 
 定义多属性：defineproperties
-读取属性：getOwnPropertyDescriptor
 
+读取属性：getOwnPropertyDescriptor
 _________
 
 创建对象
@@ -522,6 +525,86 @@ _________
 
 闭包
 	//一篇不错的解读：http://bbs.html5cn.org/thread-86078-1-1.html
+
+	下面用一些代码来解释这个定义。
+	function foo() {
+	var a = 2;
+	function bar() {
+	console.log( a ); // 2
+	}
+	bar();
+	}
+	foo();
+	这段代码看起来和嵌套作用域中的示例代码很相似。基于词法作用域的查找规则，函数bar()可以
+	访问外部作用域中的变量a（这个例子中的是一个RHS引用查询）。
+	这是闭包吗？
+	技术上来讲，也许是。但根据前面的定义，确切地说并不是。我认为最准确地用来解释bar()对a的
+	引用的方法是词法作用域的查找规则，而这些规则只是闭包的一部分。（但却是非常重要的一部
+	分！）
+	从纯学术的角度说，在上面的代码片段中，函数bar()具有一个涵盖foo()作用域的闭包（事实上，涵
+	盖了它能访问的所有作用域，比如全局作用域）。也可以认为bar()被封闭在了foo()的作用域中。为
+	什么呢？原因简单明了，因为bar()嵌套在foo()内部。
+	但是通过这种方式定义的闭包并不能直接进行观察，也无法明白在这个代码片段中闭包是如何工
+	作的。我们可以很容易地理解词法作用域，而闭包则隐藏在代码之后的神秘阴影里，并不那么容易
+	理解。
+	下面我们来看一段代码，清晰地展示了闭包：
+	function foo() {
+	var a = 2;
+	function bar() {
+	console.log( a );
+	}
+	return bar;
+	}
+	var baz = foo();
+	baz(); // 2 ———— 朋友，这就是闭包的效果。
+	函数bar()的词法作用域能够访问foo()的内部作用域。然后我们将bar()函数本身当作一个值类型
+	进行传递。在这个例子中，我们将bar所引用的函数对象本身当作返回值。
+	在foo()执行后，其返回值（也就是内部的bar()函数）赋值给变量baz并调用baz()，实际上只是通过
+	不同的标识符引用调用了内部的函数bar()。
+	bar()显然可以被正常执行。但是在这个例子中，它在自己定义的词法作用域以外的地方执行。
+	在foo()执行后，通常会期待foo()的整个内部作用域都被销毁，因为我们知道引擎有垃圾回收器用
+	来释放不再使用的内存空间。由于看上去foo()的内容不会再被使用，所以很自然地会考虑对其进
+	行回收。
+	而闭包的“神奇”之处正是可以阻止这件事情的发生。事实上内部作用域依然存在，因此没有被回
+	收。谁在使用这个内部作用域？原来是bar()本身在使用。
+	拜bar()所声明的位置所赐，它拥有涵盖foo()内部作用域的闭包，使得该作用域能够一直存活，以
+	供bar()在之后任何时间进行引用。
+	bar()依然持有对该作用域的引用，而这个引用就叫作闭包。
+	因此，在几微秒之后变量baz被实际调用（调用内部函数bar），不出意料它可以访问定义时的词法
+	作用域，因此它也可以如预期般访问变量a。
+	这个函数在定义时的词法作用域以外的地方被调用。闭包使得函数可以继续访问定义时的词法作
+	用域。
+	当然，无论使用何种方式对函数类型的值进行传递，当函数在别处被调用时都可以观察到闭包。
+	function foo() {
+	var a = 2;
+	function baz() {
+	console.log( a ); // 2
+	}
+	bar( baz );
+	}
+	function bar(fn) {
+	fn(); // 妈妈快看呀，这就是闭包！
+	}
+	把内部函数baz传递给bar，当调用这个内部函数时（现在叫作fn），它涵盖的foo()内部作用域的闭
+	包就可以观察到了，因为它能够访问a。
+	传递函数当然也可以是间接的。
+	var fn;
+	function foo() {
+	var a = 2;
+	function baz() {
+	console.log( a );
+	}
+	fn = baz; // 将baz分配给全局变量
+	}
+	function bar() {
+	fn(); // 妈妈快看呀，这就是闭包！
+	}
+	foo();
+	bar(); // 2
+	无论通过何种手段将内部函数传递到所在的词法作用域以外，它都会持有对原始定义作用域的引
+	用，无论在何处执行这个函数都会使用闭包。
+
+
 	闭包是指有权访问另一个函数作用域中的变量的函数。创建闭包的常见方式，就是在一个函数内部创建另一个函数
 
 	function createComparisonFunction(propertyName){
@@ -747,8 +830,8 @@ _________
 	//读取并将JSON
 	var result = JSON.parse(localStorage.getItem("seriData"))
 
-	e.currentTarget//绑定处的dom
-	e.target//点击处的dom
+	e.currentTarget//e
+	绑定处的dom.target//点击处的dom
 
 	_.template(template,tData, { "variable": "Intro" });//第三个参数可以自定义变量名称
 
@@ -901,7 +984,7 @@ _________
 
     	var xhr = createXHR();
     	xhr.onreadystatechange = function(){
-    		if(xhr.readyState ==4){
+    		if(xhr.readyState == 4){
     			if((xhr.status >=200 && xhr.status <300)|| xhr.status ==304){
     				alert(xhr.responseText)
     			}else{
@@ -959,12 +1042,12 @@ _________
    		var CookieUtil = {
    			get:function(name){
    				var cookieName = encodeURIComponent(name) + "=",
-   					cookieStart = doucument.cookie.indexOf(cookieName),
+   					cookieStart = document.cookie.indexOf(cookieName),
    					cookieValue = null;
    				if(cookieStart > -1){
-   					var cookieEnd = doucument.cookie.indexOf(";",cookieStart);
+   					var cookieEnd = document.cookie.indexOf(";",cookieStart);
    					if(cookieEnd == -1){
-   						cookieEnd = doucument.cookie.length;
+   						cookieEnd = document.cookie.length;
    					}
    					cookieValue = decodeURIComponent(doucument.cookie.substring(cookieStart+cookieName.length,cookieEnd))
    				}
@@ -1186,7 +1269,7 @@ _________
 	新兴的API
 		1.requestAnimationFrame
 			function updateProgress(){
-				var div = doucument.getElementById("status");
+				var div = document.getElementById("status");
 				diy.style.width = (parseInt(div.style.width,10)+5)+"%";
 				if(diy.style.width != "100%"){
 					requestAnimationFrame(updateProgress)
@@ -1480,7 +1563,7 @@ _________
 			//更多方法和属性
 		}
 	}())
-	模块模式得到了广泛的使用，并且强烈建议使用这种方式组织你的代码，尤其是当代吗日渐增长的时候。
+	模块模式得到了广泛的使用，并且强烈建议使用这种方式组织你的代码，尤其是当代码日渐增长的时候。
 
 
 	揭示模块模式
@@ -1801,7 +1884,7 @@ _________
 					var i,
 						toStr = Object.prototype.toString,
 						astr = "[object Array]";
-					child = child || {};
+					child = child || {}; 
 					for(i in parent){
 						if(parent.hasOwnProperty(i)){
 							console.log(parent[i] +"##"+i+"###"+child[i])
@@ -1865,7 +1948,7 @@ _________
 				Function.prototype.bind = function(thisArg){
 					var fn = this,
 						slice = Array.prototype.slice,
-						args = slice.call(arguments,1)
+						args = slice.call(arguments,1)//arguments是类数组 没有slice属性 Array.prototype.slice.call(arguments) === arguments.slice() 返回argument对应的数组
 
 					return function(){
 						//拼接参数列表，即那些传递给bind()的参数（除第一个外），以及那些传递给由bind()所返回的新函数的参数
@@ -4446,5 +4529,1509 @@ jQuery插件设计模式
 
 
 
+css
+	盒子模型
+	继承和层叠
+	BFC(http://www.cnblogs.com/lhb25/p/inside-block-formatting-ontext.html、http://www.cnblogs.com/dojo-lzz/p/3999013.html) 
+		BFC 定义
+　　        BFC布局规则：BFC(Block formatting context)直译为"块级格式化上下文"。
+			它是一个独立的渲染区域，只有Block-level box参与， 它规定了内部的Block-level Box如何布局，并且与这个区域外部毫不相干。
 
+		BFC布局规则：
+			内部的Box会在垂直方向，一个接一个地放置。
+			Box垂直方向的距离由margin决定。属于同一个BFC的两个相邻Box的margin会发生重叠
+			每个元素的margin box的左边， 与包含块border box的左边相接触(对于从左往右的格式化，否则相反)。即使存在浮动也是如此。
+			BFC的区域不会与float box重叠。
+			BFC就是页面上的一个隔离的独立容器，容器里面的子元素不会影响到外面的元素。反之也如此。
+			计算BFC的高度时，浮动元素也参与计算
+		哪些元素会生成BFC?
+			根元素
+			float属性不为none
+			position为absolute或fixed
+			display为inline-block, table-cell, table-caption, flex, inline-flex
+			overflow不为visible
+	box-sizing
+		box-sizing属性可以为三个值之一：content-box（default），border-box，padding-box。
+		content-box，border和padding不计算入width之内
+		padding-box，padding计算入width内
+		border-box，border和padding计算入width之内，其实就是怪异模式了~
+	box-flex
+		例如：
+			#p1
+			{
+				-moz-box-flex:1.0; /* Firefox */
+				-webkit-box-flex:1.0; /* Safari 和 Chrome */
+				box-flex:1.0;
+				border:1px solid red;
+			}
+
+			#p2
+			{
+				-moz-box-flex:2.0; /* Firefox */
+				-webkit-box-flex:2.0; /* Safari 和 Chrome */
+				box-flex:2.0;
+				border:1px solid blue;
+			}
+	转换
+		transform
+			translate()
+			rotate()
+			scale()
+			skew()
+			matrix()
+		例如：
+			div
+			{
+				transform: rotateX(120deg);
+				-webkit-transform: rotateX(120deg);	/* Safari 和 Chrome */
+				-moz-transform: rotateX(120deg);	/* Firefox */
+			}
+	过渡
+		transition
+		例如：
+			div
+			{
+				transition: width 2s;
+				-moz-transition: width 2s;	/* Firefox 4 */
+				-webkit-transition: width 2s;	/* Safari 和 Chrome */
+				-o-transition: width 2s;	/* Opera */
+			}
+	动画
+		@keyframes
+		animation
+		例如：
+			div
+			{
+				animation: myfirst 5s;
+				-moz-animation: myfirst 5s;	/* Firefox */
+				-webkit-animation: myfirst 5s;	/* Safari 和 Chrome */
+				-o-animation: myfirst 5s;	/* Opera */
+			}
+			@keyframes myfirst
+			{
+				from {background: red;}
+				to {background: yellow;}
+			}
+
+			@-moz-keyframes myfirst /* Firefox */
+			{
+				from {background: red;}
+				to {background: yellow;}
+			}
+
+			@-webkit-keyframes myfirst /* Safari 和 Chrome */
+			{
+				from {background: red;}
+				to {background: yellow;}
+			}
+
+			@-o-keyframes myfirst /* Opera */
+			{
+				from {background: red;}
+				to {background: yellow;}
+			}
+
+
+理解HTTP协议
+http://www.blogjava.net/zjusuyong/articles/304788.html
+
+
+javascript包括 ECMAscript DOM BOM
+defer和async区别就是async是异步，不按顺序
+无文档声明就是混杂模式，加声明是标准（严格）模式，混杂模式不同浏览器差异很大，标准模式是按标准执行
+变量、函数、操作符区分大小写
+undefined Null Boolean Number String
+typeof null === "object" typeof [] === "object" typeof undefined === "undefined" null == undefined
+无论你叫它什么，在JavaScript中创建一个空对象最简单的方法都是Object.create(null)（详细介
+绍请看第5章）。Object.create(null)和{}很像，但是并不会创建Object.prototype这个委托，所以它
+比{}“更空”
+parseInt("1234blue")//1234
+0.1+0.2 != 0.3
+toString() 转进制 var  a = 10; a.toString(16)//"a"
+hasOwnProperty()给定的属性在当前对象实例中是否存在
+基本类型按值访问 引用类型按引用访问
+所有函数的参数都是按值传递的
+typeof检测基本类型 instanceof检测是不是某种类型对象
+person instanceof Object //person是Object的吗？
+垃圾收集：1.标记清除 2.引用计数
+检测数组
+if(typeof Array.isArray === "undefined"){
+	Array.isArray = function (arg){
+		return Object.prototype.toString.call(arg) === "[object Array]";
+	}
+}
+Array 对象方法
+是否改变现有数组	方法	描述
+否 	concat()	连接两个或更多的数组，并返回结果。  
+否  join()	把数组的所有元素放入一个字符串。元素通过指定的分隔符进行分隔。
+是  pop()	删除并返回数组的最后一个元素
+是	push()	向数组的末尾添加一个或更多元素，并返回新的长度。
+是	reverse()	颠倒数组中元素的顺序。
+是	shift()	删除并返回数组的第一个元素
+否	slice()	从某个已有的数组返回选定的元素
+是	sort()	对数组的元素进行排序
+是	splice()	删除元素，并向数组添加新元素。
+	toSource()	返回该对象的源代码。
+	toString()	把数组转换为字符串，并返回结果。
+	toLocaleString()	把数组转换为本地数组，并返回结果。 
+是	unshift()	向数组的开头添加一个或更多元素，并返回新的长度。
+	valueOf()	返回数组对象的原始值
+
+ES5迭代方法
+every() 对数组中的每一项运行给定函数，如果该函数对每一项都返回true，则返回true
+filter() 对数组中的每一项运行给定函数，返回该函数会返回true的项组成的数组
+forEach() 对数组中的每一项运行给定函数。这个方法没有返回值
+map() 对数组中的每一项运行给定函数，返回每次函数调用的结果组成的数组
+some() 对数组中的每一项运行给定函数，如果该函数对任一项返回true，则返回true
+
+var numbers = [1,2,3,4,5]
+var result = numbers.every(function(item,index,array){
+	return item > 2;
+})
+//false
+var result = numbers.filter(function(item,index,array){
+	return item > 2;
+})
+//[3,4,5]
+numbers.forEach(function(item,index,array){
+	//dosomething
+})
+var result = numbers.filter(function(item,index,array){
+	return item * 2;
+})
+//[2,4,5,8,10]
+var result = numbers.some(function(item,index,array){
+	return item > 2;
+})
+//true
+
+ES5数组归并方法 reduce 和 reduceRight
+numbers.reduce(function(prev,cur,index,array){
+	return prev + cur;
+})
+//15
+
+Date
+ES5 新增了Date.now()可以获取当前时间的毫秒数
+常用方法 
+getFullYear() 取得4位数年份
+getMonth() 返回月份 从0开始
+getDate() 返回日期月份中的天数（1到31）
+getDay() 返回星期几（0是周日，6是周六）
+getHours() 小时（0-23）
+getMinutes() 分钟（0-59）
+getSeconds() 秒（0-59）
+
+正则
+https://github.com/wenkangzhou/RegularExpression
+
+函数声明提升
+对的
+alert(sum(1,1))
+function sum (a,b){}{
+	return a + b;
+}
+错的
+alert(sum(1,1))
+var sum = function (a,b){}{
+	return a + b;
+}
+变量声明提升
+a = 2;
+var a;
+console.log( a );
+你认为console.log(..)声明会输出什么呢？
+很多开发者会认为是undefined，因为var a声明在a = 2之后，他们自然而然地认为变量被重新赋
+值了，因此会被赋予默认值undefined。但是，真正的输出结果是2。
+考虑另外一段代码：
+console.log( a );
+var a = 2;
+鉴于上一个代码片段所表现出来的某种非自上而下的行为特点，你可能会认为这个代码片段也会
+有同样的行为而输出2。还有人可能会认为，由于变量a在使用前没有先进行声明，因此会抛
+出ReferenceError异常。
+不幸的是两种猜测都是不对的。输出来的会是undefined。
+那么到底发生了什么？看起来我们面对的是一个先有鸡还是先有蛋的问题。到底是声明（蛋）在
+前，还是赋值（鸡）在前？
+
+为了搞明白这个问题，我们需要回顾一下第1章中关于编译器的内容。回忆一下，引擎会在解释
+JavaScript代码之前首先对其进行编译。编译阶段中的一部分工作就是找到所有的声明，并用合适
+的作用域将它们关联起来。第2章中展示了这个机制，也正是词法作用域的核心内容。
+因此，正确的思考思路是，包括变量和函数在内的所有声明都会在任何代码被执行前首先被处理。
+当你看到var a = 2;时，可能会认为这是一个声明。但JavaScript实际上会将其看成两个声
+明：var a;和a = 2;。第一个定义声明是在编译阶段进行的。第二个赋值声明会被留在原地等待执
+行阶段。
+我们的第一个代码片段会以如下形式进行处理：
+var a;
+a = 2;
+console.log( a );
+其中第一部分是编译，而第二部分是执行。
+类似地，我们的第二个代码片段实际是按照以下流程处理的：
+var a;
+console.log( a );
+a = 2;
+函数优先
+函数声明和变量声明都会被提升。但是一个值得注意的细节（这个细节可以出现在有多个“重复”声
+明的代码中）是函数会首先被提升，然后才是变量。
+考虑以下代码：
+foo(); // 1
+var foo;
+function foo() {
+console.log( 1 );
+}
+foo = function() {
+console.log( 2 );
+};
+会输出1而不是2！这个代码片段会被引擎理解为如下形式：
+function foo() {
+console.log( 1 );
+}
+foo(); // 1
+foo = function() {
+console.log( 2 );
+};
+
+call(this,a,b,c)
+apply(this,arguments)
+
+引用类型和基本包装类型的区别就是对象的生存期，引用类型一直保存在作用域，包装类型只存在一行代码的执行瞬间，立即销毁
+
+String 对象方法
+方法	描述
+anchor()	创建 HTML 锚。
+big()	用大号字体显示字符串。
+blink()	显示闪动字符串。
+bold()	使用粗体显示字符串。
+charAt()	返回在指定位置的字符。
+charCodeAt()	返回在指定的位置的字符的 Unicode 编码。
+concat()	连接字符串。
+fixed()	以打字机文本显示字符串。
+fontcolor()	使用指定的颜色来显示字符串。
+fontsize()	使用指定的尺寸来显示字符串。
+fromCharCode()	从字符编码创建一个字符串。
+indexOf()	检索字符串。
+italics()	使用斜体显示字符串。
+lastIndexOf()	从后向前搜索字符串。
+link()	将字符串显示为链接。
+localeCompare()	用本地特定的顺序来比较两个字符串。
+match()	找到一个或多个正则表达式的匹配。
+replace()	替换与正则表达式匹配的子串。
+search()	检索与正则表达式相匹配的值。
+slice()	提取字符串的片断，并在新的字符串中返回被提取的部分。
+small()	使用小字号来显示字符串。
+split()	把字符串分割为字符串数组。
+strike()	使用删除线来显示字符串。
+sub()	把字符串显示为下标。
+substr()	从起始索引号提取字符串中指定数目的字符。
+substring()	提取字符串中两个指定的索引号之间的字符。
+sup()	把字符串显示为上标。
+toLocaleLowerCase()	把字符串转换为小写。
+toLocaleUpperCase()	把字符串转换为大写。
+toLowerCase()	把字符串转换为小写。
+toUpperCase()	把字符串转换为大写。
+toSource()	代表对象的源代码。
+toString()	返回字符串。
+valueOf()	返回某个字符串对象的原始值。
+
+var a = function (){};
+a.prototype.name = 'b'
+var c = new a();
+c.__proto__ == a.prototype == Object.getPrototypeOf(c)//true
+Object.keys(a.prototype)//name
+Object.getOwnPropertyNames(a.prototype)//constructor,name
+
+window location navigator screen history
+location.assign("http://baudu.com") === location.href = "http://baudu.com" === window.location = "http://baudu.com"
+
+Node类型(nodeType )
+Node.ELEMENT_NODE 1
+Node.ATTRIBUTE_NODE 2
+Node.TEXT_NODE 3
+Node.ENTITY_REFERENCE_NODE 5
+Node.ENTITY_NODE 6
+Node.PROCESSING_INSTRUCTION_NODE 7
+Node.COMMENT_NODE 8
+Node.DOCUMENT_NODE 9
+Node.DOCUMENT_TYPE_NODE 10
+Node.DOCUMENT_FRAGMENT_NODE 11
+Node.NOTATION_NODE 12
+
+NodeList转为数组
+var arratNodes = Array.prototype.slice.call(someNode.childNodes,0)
+appendChild()
+insertBefore()
+replaceChild()
+removeChild()
+cloneNode()//true、false深、浅复制
+document是HTMLDocument（继承自Document类型）的实例
+document.documentElement//取得对<html>的引用
+document.body//取得对<body>的引用
+
+document.getElementByTagName(),返回HTMLCollection对象
+<img src="xx.jpg" name="myImg">
+var images = document.getElementByTagName("img")
+images[0].src images.item(0).src
+var myImg = images.namedItem("myImg")
+images["myImg"]
+
+element
+getAttribute()
+setAttribute()
+attributes
+	NamedNodeMap
+		getNamedItem
+		removeNamedItem
+		setNamedItem
+		item
+var id = element.attributes.getNamedItem(id).nodeValue
+
+document.createElement()
+document.createTextNode()
+normalize()//合并相邻文本节点
+splitText()//将一个文本节点拆分成两个文本节点
+
+Comment//用来表示注释
+
+CDATASection
+
+DocumentFragment
+//动态加载外部JavaScript
+function loadScript(url){
+	var script = document.createElement("script");
+	script.type = "text/javascript";
+	script.src = url;
+	document.body.appendChild(script);
+}
+//动态加载外部css
+function loadStyles(url){
+	var link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.type = "text/css";
+	link.href = url;
+	var head = document.getElementByTagName("head")[0];
+	head.appendChild(link)
+}
+
+NodeList NamedNodeMap HTMLCollection
+
+querySelector()
+querySelectorAll()
+
+document.readyState //loading正在加载 complete加载完毕
+document.compatMode
+
+//<div id="xx" data-name="hi"></div>
+document.getElementById("xx").dataset.name === $("#xx").data("name")
+
+事件捕获 html->body->div
+事件冒泡 div->body->html
+
+addEventListener removeEventListener
+attachEvent detachEvent
+
+DOMContentLoaded
+readystatechange
+	uninitialized(未初始化)
+	loading(正在加载)
+	loaded(加载完毕)
+	interactive(交互)
+	complete(完成)
+pageshow//用于往返缓存
+pagehide//用于往返缓存
+hashchange
+
+设备事件
+	orientationchange
+	MozOrientation
+	deviceorientation
+	devicemotion
+
+	touchstart
+	touchmove
+	touchend
+	touchcancel
+
+	gesturestart
+	gesturechange
+	gestureend
+事件委托
+	利用事件冒泡，只指定一个事件处理程序，就可以管理某一类型的所有事件。 
+	例如，click事件会一直冒泡到document层次。也就是说，我们可以为整个页面指定
+	一个onclick事件处理程序，而不必给每个可单击的元素分别添加事件处理程序
+
+	“空事件处理程序” btn.onclick = null
+
+$0.contentEditable = "true"
+
+Canvas是使用JavaScript程序绘图(动态生成)，SVG是使用XML文档描述来绘图。
+从这点来看：SVG更适合用来做动态交互，而且SVG绘图很容易编辑，只需要增加或移除相应的元素就可以了。
+同时SVG是基于矢量的，所有它能够很好的处理图形大小的改变。
+Canvas是基于位图的图像，它不能够改变大小，只能缩放显示；
+所以说Canvas更适合用来实现类似于Flash能做的事情(当然现在Canvas与Flash相比还有一些不够完善的地方)。
+WebGL是针对Canvas的3D上下文，可以为HTML5 Canvas提供硬件3D加速渲染
+window.postMessage()//跨文档消息传送
+dragstart drag dragend
+audio 接口 P487 事件 P488
+history.pushState
+history.popState
+history,replaceState
+//解决setTimeout传参的问题
+setTimeout(function(){self.countDown($dom,self);}, 1000);
+window.onerror = function(message,url,line){
+	alert(message);
+	return false;
+}
+JSON.stringify();//转为JSON字符串
+JSON.parse();//转为对象字面量
+toJSON() 
+xhr.status
+	0：未初始化。尚未调用open()方法
+	1：启动。已经调用open()方法，但尚未调用send()方法
+	2：发送。已经调用send()方法，但尚未接收到响应
+	3：接收。已经接收到部分响应数据
+	4：完成。已经接收到全部响应数据，而且已经可以再客户端使用了
+HTTP头部信息
+	Accept：浏览器能够处理的内容类型
+	Accept-Charset：浏览器能够显示的字符集
+	Accept-Encoding：浏览器能够处理的压缩编码
+	Accept-language：浏览器当前设置的语言
+	Connection：浏览器与服务器之间连接的类型
+	Cookie：当前页面设置的任何Cookie
+	Host：发出请求的页面所在的域
+	Referer：发出请求的页面的URI
+	User-Agent：浏览器的用户代码字符串
+时间进度
+	loadstart
+	progress
+	error 
+	abort
+	load
+	loadend
+IE实现CORS XDR(XDomainRequest)
+
+you donnot konw JavaScript 
+
+var anotherObject = {
+a:2
+};
+var myObject = Object.create( anotherObject );
+anotherObject.a; // 2
+myObject.a; // 2
+anotherObject.hasOwnProperty( "a" ); // true
+myObject.hasOwnProperty( "a" ); // false
+myObject.a++; // 隐式屏蔽！
+anotherObject.a; // 2
+myObject.a; // 3
+myObject.hasOwnProperty( "a" ); // true
+尽管myObject.a++看起来应该（通过委托）查找并增加anotherObject.a属性，但是别忘了++操作相
+当于myObject.a = myObject.a + 1。因此++操作首先会通过[[Prototype]]查找属性a并
+从anotherObject.a获取当前属性值2，然后给这个值加1，接着用[[Put]]将值3赋给myObject中新建
+的屏蔽属性a，天呐！
+修改委托属性时一定要小心。如果想让anotherObject.a的值增加，唯一的办法
+是anotherObject.a++。
+
+委托控件对象
+下面的例子使用对象关联风格委托来更简单地实现Widget/Button：
+var Widget = {
+init: function(width,height){
+this.width = width || 50;
+this.height = height || 50;
+this.$elem = null;
+},
+insert: function($where){
+if (this.$elem) {
+this.$elem.css( {
+width: this.width + "px",
+height: this.height + "px"
+} ).appendTo( $where );
+}
+}
+};
+var Button = Object.create( Widget );
+Button.setup = function(width,height,label){
+// 委托调用
+this.init( width, height );
+this.label = label || "Default";
+this.$elem = $( "<button>" ).text( this.label );
+};
+Button.build = function($where) {
+// 委托调用
+this.insert( $where );
+this.$elem.click( this.onClick.bind( this ) );
+};
+Button.onClick = function(evt) {
+console.log( "Button '" + this.label + "' clicked!" );
+};
+$( document ).ready( function(){
+var $body = $( document.body );
+var btn1 = Object.create( Button );
+btn1.setup( 125, 30, "Hello" );
+var btn2 = Object.create( Button );
+btn2.setup( 150, 40, "World" );
+btn1.build( $body );
+btn2.build( $body );
+} );
+
+why is typeof null “object”?
+
+In the first implementation of JavaScript,
+JavaScript values were represented as a type tag and a value, 
+with the type tag for objects being 0, 
+and null was represented as the NULL pointer (0x00 on most platforms). 
+As a result, null had 0 as a type tag, hence the bogus typeof return value (reference).
+
+This is generally regarded as a mistake. 
+
+null有时会被当作一种对象类型，但是这其实只是语言本身的一个bug，
+即对null执行typeof null时会返回字符串"object"。1实际上，null本身是基本类型。
+1原理是这样的，不同的对象在底层都表示为二进制，在JavaScript中二进制前三位都为0的话会被
+判断为object类型，null的二进制表示是全0，自然前三位也是0，所以执行typeof时会返
+回“object”。——译者注
+
+
+
+
+这个函数在定义时的词法作用域以外的地方被调用。
+闭包使得函数可以继续访问定义时的词法作用域。
+当函数可以记住并访问所在的词法作用域，即使函数是在当前词法作用域之外执行，
+这时就产生了闭包。
+
+为什么要用Array.prototype.slice.call
+
+在javascript里有一种array-like的对象，就是和Array很像，比如拥有push，slice等方法，拥有length属性，而且你可以很容易的创建一个这样的对象:
+
+var foo = {0:'hello',1:'world',length:2,slice:Array.prototype.slice}
+转变成一个数组对象:
+
+console.log(Array.prototype.slice.call(foo,0));
+    //["hello", "world"]
+    console.log(foo.slice())
+    //["hello", "world"]
+这里是因为这个像数组的对象拥有这个slice方法，如果没有呢？就不能直接使用，要使用原型的方法调用了。如下:
+
+console.log(Array.prototype.splice.call(foo,0));
+    //["hello", "world"]
+    console.log(foo.splice())
+    //TypeError: Object #<Object> has no method 'splice'
+常用的arguments对象, document.links, document.forms等都是非常像数组（Array）的，可以使用Array.prototype.slice.call将其转换成数组操作。
+
+function foo() {
+console.log( this.a );
+}
+var a = 2;
+var o = { a: 3, foo: foo };
+var p = { a: 4 };
+o.foo(); // 3
+(p.foo = o.foo)(); // 2
+赋值表达式p.foo = o.foo的返回值是目标函数的引用，因此调用位置是foo()而不是p.foo()或
+者o.foo()。根据我们之前说过的，这里会应用默认绑定。
+
+
+
+思考下面的代码：
+function Foo() { /* .. */ }
+Foo.prototype = { /* .. */ }; // 创建一个新原型对象
+var a1 = new Foo();
+a1.constructor === Foo; // false!
+a1.constructor === Object; // true!
+Object(..)并没有“构造”a1，对吧？看起来应该是Foo()“构造”了它。大部分开发者都认为是Foo()执
+行了构造工作，但是问题在于，如果你认为“constructor”表示“由......构造”的话，a1.constructor应
+该是Foo，但是它并不是Foo！
+到底怎么回事？a1并没有.constructor属性，所以它会委托[[Prototype]]链上的Foo.prototype。但
+是这个对象也没有.constructor属性（不过默认的Foo.prototype对象有这个属性！），所以它会继续
+委托，这次会委托给委托链顶端的Object.prototype。这个对象有.constructor属性，指向内置
+的Object(..)函数。
+
+
+// 和你想要的机制不一样！
+Bar.prototype = Foo.prototype;
+// 基本上满足你的需求，但是可能会产生一些副作用 :(
+Bar.prototype = new Foo();
+Bar.prototype = Foo.prototype并不会创建一个关联到Bar.prototype的新对象，它只是
+让Bar.prototype直接引用Foo.prototype对象。因此当你执行类似Bar.prototype.myLabel = ...的赋
+值语句时会直接修改Foo.prototype对象本身。显然这不是你想要的结果，否则你根本不需要Bar对
+象，直接使用Foo就可以了，这样代码也会更简单一些。
+Bar.prototype = new Foo()的确会创建一个关联到Bar.prototype的新对象。但是它使用了Foo(..)
+的“构造函数调用”，如果函数Foo有一些副作用（比如写日志、修改状态、注册到其他对象、给this添
+加数据属性，等等）的话，就会影响到Bar()的“后代”，后果不堪设想。
+因此，要创建一个合适的关联对象，我们必须使用Object.create(..)而不是使用具有副作用
+的Foo(..)。这样做唯一的缺点就是需要创建一个新对象然后把旧对象抛弃掉，不能直接修改已有
+的默认对象。
+
+if (!Object.create) {
+Object.create = function(o) {
+function F(){}
+F.prototype = o;
+return new F();
+}
+
+jQuery deffered和promise对象方法
+
+Promise对象其实就是deferred对象的特例，因为Promise对象不能更改异步状态，而deferred对象可以。这点在他们的方法设计上，有着明显的体现。
+要知道，Promise对象是没有resolve,reject,notify等方法的，也就意味着，你无法针对Promise对象进行状态更改，只能在done或fail中进行回调配置。
+//https://segmentfault.com/a/1190000000523676
+
+if (!Function.prototype.bind) {
+  Function.prototype.bind = function (oThis) {
+    if (typeof this !== "function") {
+      // closest thing possible to the ECMAScript 5
+      // internal IsCallable function
+      throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+    }
+
+    var aArgs = Array.prototype.slice.call(arguments, 1), 
+        fToBind = this, 
+        fNOP = function () {},
+        fBound = function () {
+          return fToBind.apply(this instanceof fNOP
+                                 ? this
+                                 : oThis || this,
+                               aArgs.concat(Array.prototype.slice.call(arguments)));
+        };
+
+    fNOP.prototype = this.prototype;
+    fBound.prototype = new fNOP();
+
+    return fBound;
+  };
+}
+
+function test(){
+	var a = function (){
+
+	};
+	a.prototype.A = function(){
+		console.log("A");
+		var b = function(){
+
+		}
+		b.prototype.B = function(){
+			console.log("B");
+		}
+		return new b;
+	}
+	return new a;
+}
+
+当你对一个空变量求值时，空值null在数值类型环境中会被当作０来对待，而布尔类型环境中会被当作false
+。例如：
+
+var n = null;
+console.log(n * 32); //  0
+
+对象属性名字可以是任意字符串，包括空串。如果对象属性名字不是合法的javascript标识符，它必须用""包裹。
+属性的名字不合法，那么便不能用.访问属性值，而是通过类数组标记访问和赋值。
+
+var unusualPropertyNames = {
+  "": "An empty string",
+  "!": "Bang!"
+}
+console.log(unusualPropertyNames."");   // SyntaxError: Unexpected string
+console.log(unusualPropertyNames[""]);  // An empty string
+console.log(unusualPropertyNames.!);    // SyntaxError: Unexpected token !
+console.log(unusualPropertyNames["!"]); // Bang!
+
+var str = "this string \
+is broken \
+across multiple\
+lines."
+console.log(str);   // this string is broken across multiplelines.
+
+try...catch 语句有一个包含一条或者多条语句的try代码块,  0个或多个的catch代码块, catch代码块中的语句会在try代码块中抛出异常时执行。 
+换句话说, 如果你在try代码块中的代码如果没有执行成功，那么你希望将执行流程转入catch代码块。
+如果try代码块中的语句 (或者try 代码块中调用的方法) 一旦抛出了异常,那么执行流程会立即进入catch 代码块. 
+如果try代码块没有抛出异常,catch代码块就会被跳过. finally 代码块总会紧跟在try和catch代码块之后执行，但会在try和catch代码块之后的其他代码之前执行.
+
+function f() {
+    try {
+        alert(0);
+        throw "bogus";
+    } catch(e) {
+        alert(1);
+        return true; // this return statement is suspended until finally block has completed
+        alert(2); // not reachable
+    } finally {
+        alert(3);
+        return false; // overwrites the previous "return"
+        alert(4); // not reachable
+    }
+    // "return false" is executed now
+    
+    alert(5); // not reachable
+}
+f(); // alerts 0, 1, 3; returns false
+
+终止一个label
+
+var x = 0;
+var z = 0
+labelCancelLoops: while (true) {
+  console.log("外部循环: " + x);
+  x += 1;
+  z = 1;
+  while (true) {
+    console.log("内部循环: " + z);
+    z += 1;
+    if (z === 10 && x === 10) {
+      break labelCancelLoops;
+    } else if (z === 10) {
+      break;
+    }
+  }
+}
+
+继续一个label
+checkiandj:
+  while (i < 4) {
+    console.log(i);
+    i += 1;
+    checkj:
+      while (j > 4) {
+        console.log(j);
+        j -= 1;
+        if ((j % 2) == 0) {
+          continue checkj;
+        }
+        console.log(j + " is odd.");
+      }
+      console.log("i = " + i);
+      console.log("j = " + j);
+  }
+
+
+  一些 JavaScript 对象, 例如 document.getElementsByTagName() 返回的 NodeList 或者函数内部可用的 arguments 对象，
+  他们表面上看起来，外观和行为像数组，但是不共享他们所有的方法。arguments 对象提供一个 length 属性，但是不实现 forEach() 方法
+
+function printArguments() {
+	Array.prototype.forEach.call(arguments, function(item) {
+	  	console.log(item);
+	});
+}
+NaN === NaN//false
+Number.NaN(NaN)//true
+Map可以是重复值
+Set不可以 length属性的值为0
+
+
+1.数组排序
+
+[1,9,22,3,5,50,81].sort(function(a, b) {
+    return a - b;//改成b - a则从大到小排列
+});
+4.数组去重
+
+[1,3,3,4,6,5,4,7,8,8,8,5,2,1].filter(function(value, index, array) {
+    return array.indexOf(value) == index;
+});
+5.数字千分位分割
+
+var a = 123123123123123;
+console.log(a.toLocaleString()); // '123,123,123,123,123'
+
+
+判等
+x	y	==	===	Object.is
++0	-0	true	true	false
+NaN	NaN	false	false	true
+
+关闭输入法
+< input style=”ime-mode:disabled”>
+
+封装JS
+
+个人给一点建议不要再搞什么命名空间了。已经进入 2016 年啦，JavaScript 现在的模块化机制已经相当成熟，学习一下如何用 ES2015 Module 来封装模块，实际用的时候可以考虑各种模块转换编译器／加载器，浏览器的兼容性不会是问题。比如说 babel／webpack／jspm 等等都可以……这样吧，我简单帮你梳理一下：
+
+首先学会怎么用 ES2015 来编写／封装模块（node／npm，加上 babel 的入门知识）
+记住，在编写封装模块时是不需要考虑兼容性的，后面有办法让你向后兼容（至少到 ES5）
+学会发布它，比如说发布到 npm
+学会如何引入模块到你的应用体系中去，如何加载／打包（用上 gulp／webpack／jspm 等等，取决于项目）
+这是一个完整的生态系统，封装不只是要学习代码怎么写，更要知道如何维护，如何应用，否则封装的没有普适性就没有价值。
+
+至于具体到新的模块语法怎么写，我这里有之前回答别人（不在 SF）的一部分内容供你参考——别想太复杂，可以很简单的：
+
+我不喜欢用 Class，不管是过去的构造器模式还是现在的新语法。不是因为对任何编程范式有偏见，本来 JavaScript 就不是 Class Based OO 语言，硬生生的去模仿就是会觉得别扭罢了。和 Java、C# 等语言不同，class 不是必需品，这也就意味着你完全可以不用。然而奇怪的是使用 JavaScript 的人很多却是不用 class 不行，这是不是对这门语言存在很大的误解呢？
+
+更重要的是在实践中我们会发现使用其他的模式——比如工厂函数（Factory Functions）要远比 class 简洁、灵活，用它来替代 class 几乎总能得到更好的结果。
+
+简单工厂函数
+// person.js
+export default _ => {
+  return {
+    greet() {
+      console.log('Hello world!')
+    }
+  }
+}
+用起来和一个 Class 几乎一模一样——除了不需要用 new，这不算坏处吧？
+
+import Person from './person'
+
+const nightire = Person()
+nightire.greet()  // "Hello world!"
+依赖注入
+console.log 限制了 greet 方法的行为，为了不局限问候的方式，可以使用依赖注入——这是解耦的一种简便易行的方法。即使在现实中很多时候看不出需要依赖注入的迹象，我们也应该有意识的这么做。在定义一种“类型”的时候对外界知道的越少越好（于是就更容易复用、扩展、组合……）。
+
+// person.js
+export default ioStream => {
+  return {
+    greet() {
+      ioStream.send('Hello world!')
+    }
+  }
+}
+比如说我们可以把 console 封装一下，让系统内所有的 ioStream 都具有统一的接口，然后就可以直接使用：
+
+import Person from './person'
+import ConsoleStream from 'console-stream'
+
+const nightire = Person(ConsoleStream())
+nightire.greet()  // "Hello world!"
+不用 Mocking 的单元测试
+这个是顺带一提的事情，因为我注意到不懂得处理依赖注入（或者说更高层次上的解耦概念）的人通常都会把单元测试写得无比蛋疼……实际上，对象字面量在很多时候胜过一切构造模式：
+
+import test from 'ava'
+import Person from './person'
+
+test(`a person can send message to io stream`, t => {
+  const ioStream = {
+    send(anything) {
+      t.same(anything, 'Hello world!');
+    }
+  }
+  
+  const anyone = Person(ioStream)
+  anyone.greet()
+})
+封装
+其实私有成员可以变得很自然很自然，闭包一样在用，只是不那么扎眼了：
+
+// person.js
+export default ioStream => {
+  let _message = 'Hello world!'
+
+  return {
+    greet() {
+      ioStream.send('Hello world!')
+    },
+    
+    get message() {
+      return _message
+    },
+    
+    set message(message) {
+      _message = message
+    }
+  }
+}
+用法就不写了，和之前没什么区别。getter/setter 也不是必须的，看接口设计需求了。
+
+组合
+这才是对 OO 来说最重要的（相较于怎么定义／创建对象来说），总的来说组合总是要优于继承，工厂模式搞起来尤其轻松。
+
+比方说我们已经有了一个动作“类”：
+
+// action.js
+export default ioStream => {
+  return {
+    wave() {
+      ioStream.send('(Waving Hands...)')
+    }
+  }
+}
+那么与 Person 的组合可以这样：
+
+import Person from './person'
+import Action from './action'
+import ConsoleStream from 'console-stream'
+
+const _console = ConsoleStream()
+const nightire = Object.assign({}, Person(_console), Action(_console))
+
+nightire.message = 'Farewell, my friend!'
+nightire.wave()  // "(Waving Hands...)"
+nightire.greet()  // "Farewell, my friend!"
+事前绑定的方法引用
+这是我觉得最好的一个优点。由于 this 在 JavaScript 中是在运行时动态绑定的，如果使用你代码的人不理解这一点，那么他们就会犯错误（而且会指责是你写的不对……）。有些人是因为不理解 this 而不敢用，有些人则是为了迁就前者而干脆不去用，架构师会比较容易体会这类情况。
+
+这是典型的容易犯错的例子：
+
+// stepper.js
+export default class Stepper {
+  constructor(offset) {
+    this.offset = offset
+  }
+  
+  add(amount) {
+    return amount + this.offset
+  }
+}
+
+// main.js
+import Stepper from './stepper'
+
+const stepper = new Stepper(1)
+[1, 2, 3].map(stepper.add.bind(stepper))
+容易犯错的地方就是最后一行，如果不加 .bind(stepper) 的话最终 this 的指向就是错误的。但往往使用者并不理解这一点，反正看到你的文档就知道这个能加上初始化传入的 offset 就是了，除非你不厌其烦的在文档里强调：“注意上下文的变化，如有必要请用 bind() 明确 this 的指向“……啊，说不定你还得培训一下让大家都知道如有“必要”的确切范围。
+
+然而你也可以这样来重写一下：
+
+// stepper.js
+export default offset => {
+  return {
+    add(amount) {
+      return amount + offset
+    }
+  }
+}
+
+// main.js
+import Stepper from './stepper'
+
+const stepper = Stepper(1)
+[1, 2, 3].map(stepper.add)  // [2, 3, 4]
+于是无论是具体实现还是接口定义都能保持简洁一致。
+
+
+如何获得某个月的天数？
+function getDays(year, month) {
+  if (month === 1) return new Date(year, month, 29).getMonth() === 1 ? 29 : 28;
+  return new Date(year, month, 31).getMonth() === month ? 31 : 30;
+}
+我们发现，new Date()的第三个参数是可以大于我们所知的每个月的最后一天的的，比如：
+
+new Date(2016, 0, 200) //Mon Jul 18 2016 00:00:00 GMT+0800 (CST)
+
+原生AJAX
+(() => {
+  'use strict'
+
+  // 创建一个新的 XMLHttpRequest。这是在无框架情况下使用 AJAX 的方法
+  const xhr = new XMLHttpRequest()
+  // 声明 HTTP 请求方法和地址
+  xhr.open('GET', 'https://randomuser.me/api/?results=3')
+  // in a GET request what you send doesn't matter GET 请求
+  // in a POST request this is the request body
+  xhr.send(null)
+
+  // 等待 'readystatechange' 状态改变去触发 xhr 对象
+  xhr.onreadystatechange = function () {
+    //等待 xhr 成功成功返回
+    if (xhr.readyState !== 4 ) { return }
+    // 非 200 状态时输出错误信息
+    if (xhr.status !== 200) { return console.log('Error: ' + xhr.status) }
+
+    // 一切正常！输出响应
+    console.log(xhr.responseText)
+  }
+})()
+
+
+随波逐流的组件写法
+// Window root
+var root = (window !== 'undefined' ? window : self);
+
+(function (global, factory) {
+
+    'use strict';
+
+    /* Use AMD */
+    if (typeof define === 'function' && define.amd) {
+        define(function () {
+            return new (factory(global, global.document))();
+        });
+    }
+    /* Use CommonJS */
+    else if (typeof module !== 'undefined' && module.exports) {
+        module.exports = (factory(global, global.document))();
+    }
+    /* Use Browser */
+    else {
+        global.Push = new (factory(global, global.document))();
+    }
+
+})(root, function (w, d) {
+
+相比 HTTP/1.x，HTTP/2 在底层传输做了很大的改动和优化：
+
+1、HTTP/2 采用二进制格式传输数据，而非 HTTP/1.x 的文本格式。二进制格式在协议的解析和优化扩展上带来更多的优势和可能。
+2、HTTP/2 对消息头采用 HPACK 进行压缩传输，能够节省消息头占用的网络的流量。而 HTTP/1.x 每次请求，都会携带大量冗余头信息，浪费了很多带宽资源。头压缩能够很好的解决该问题。
+3、多路复用，直白的说就是所有的请求都是通过一个 TCP 连接并发完成。HTTP/1.x 虽然通过 pipeline 也能并发请求，但是多个请求之间的响应会被阻塞的，所以 pipeline 至今也没有被普及应用，而 HTTP/2 做到了真正的并发请求。同时，流还支持优先级和流量控制。
+4、Server Push：服务端能够更快的把资源推送给客户端。例如服务端可以主动把 JS 和 CSS 文件推送给客户端，而不需要客户端解析 HTML 再发送这些请求。当客户端需要的时候，它已经在客户端了。
+
+移动端常见问题
+http://www.cnblogs.com/PeunZhang/p/3407453.html#question_23
+类型转换
+var myVar = "3.1415";
+str = "" + myVar,//to stringify
+int = ~~myVar,//to integer
+float = 1*myVar,//to float
+bool = !!myVar,//to Boolean
+array = [myVar];//to Array
+
+requestAnimationFrame的用法
+
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+
+// usage:
+// instead of setInterval(render, 16) ....
+
+(function animloop(){
+  requestAnimFrame(animloop);
+  render();
+})();
+// place the rAF *before* the render() to assure as close to
+// 60fps with the setTimeout fallback.
+
+
+
+React在ES6的实现中去掉了getInitialState这个hook函数，规定state在constructor中实现
+let app = React.createClass({
+	getInitialState: function(){
+        // some thing
+    }
+})
+ES6中可以写成
+class app extends React.Component{
+    getInitialState(){
+         // some thing
+    }
+}
+视频直播HLS
+http://www.alloyteam.com/2016/05/h5-camera-literacy/
+JavaScript 原型中的哲学思想
+https://segmentfault.com/a/1190000005824449
+
+chrome使用技巧
+
+ctrl+p 项目中定位文件
+ctrl+shif+o 定位成员函数
+Chrome在souces页面提供snippets一栏，这里我们可以随时编写JS代码
+JSON.stringify({name: 'lxjwlt'}, null, 4);
+copy 格式化拷贝：
+	请求项的右键菜单中选择Copy Response拷贝响应内容
+	命令行中使用copy接口处理数据（copy(xxxx)）
+	得到格式化的JSON数据(ctrl + v)
+Chrome控制台提供debug接口，可以传入一个函数，当这个函数下次执行的时候，调试器会自动在该函数中进行断点调试。
+开启Async模式后，异步函数之前的调用栈都会被记录下来，而且调用栈中代码执行状态也得到了保留。
+
+H5图片上传
+https://segmentfault.com/a/1190000006140042
+canvas压缩图片
+var canvas = document.createElement('canvas'),
+    ctx = canvas.getContext('2d');
+    
+function compress(img) {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    
+    //利用canvas进行绘图
+    
+    //将原来图片的质量压缩到原先的0.2倍。
+    var data = canvas.toDataURL('image/jpeg', 0.2); //data url的形式
+    
+    return data;
+}
+
+
+逻辑判断
+    判断为false的特殊值：false、undefined、null、0、NaN、""。
+    简单boolean和对象Boolean类型：简单boolean类型的false和true与对象Boolean类型的false和true是有区别，两者是不相等的。如下面的例子：
+		var b = new Boolean(false);
+		if (b) // 返回true
+		if (b == true) // 返回false
+
+异常处理
+  finally返回值：如果finaly添加了return 语句，则不管整个try.catch返回什么，返回值都是finally的return。如下所示：
+
+	function f() {
+	    try {
+	        console.log(0);
+	        throw "bogus";
+	    } catch(e) {
+	        console.log(1);
+	        return true; // 返回语句被暂停，直到finally执行完成
+	        console.log(2); // 不会执行的代码
+	    } finally {
+	        console.log(3);
+	        return false; //覆盖try.catch的返回
+	        console.log(4); //不会执行的代码
+	    }
+	    // "return false" is executed now 
+	    console.log(5); // not reachable
+	}
+	f(); // 输出 0, 1, 3; 返回 false
+
+	    finally吞并异常：如果finally有return并且catch中有throw异常。throw的异常不会被捕获，因为已经被finally的return覆盖了。如下代码所示：
+
+	function f() {
+	    try {
+	        throw "bogus";
+	    } catch(e) {
+	        console.log('caught inner "bogus"');
+	        throw e; // throw语句被暂停，直到finally执行完成
+	    } finally {
+	        return false; // 覆盖try.catch中的throw语句
+	    }
+	    // 已经执行了"return false"
+	}
+
+	try {
+	    f();
+	} catch(e) {
+	    //这里不会被执行，因为catch中的throw已经被finally中的return语句覆盖了
+	    console.log('caught outer "bogus"');
+	}
+	// 输出
+	// caught inner "bogus"
+
+
+	这里有个问题需要特别注意，如果字符串键值能够被强制类型转换为十进制数字的话，它
+	就会被当作数字索引来处理。
+	var a = [ ];
+	a["13"] = 42;
+	a.length; // 14
+
+	var a = "foo"
+	可惜我们无法“借用”数组的可变更成员函数，因为字符串是不可变的：
+	Array.prototype.reverse.call( a );
+	// 返回值仍然是字符串"foo"的一个封装对象（参见第3章）:(
+	一个变通（破解）的办法是先将字符串转换为数组，待处理完后再将结果转换回字符串：
+	var c = a
+	 // 将a的值转换为字符数组
+	 .split( "" )
+	 // 将数组中的字符进行倒转
+	 .reverse()
+	 // 将数组中的字符拼接回字符串
+	 .join( "" );
+	c; // "oof"
+	这种方法的确简单粗暴，但对简单的字符串却完全适用。
+
+	2.toFix(3)//报错
+	2..toFix(3)//2.000 
+	因为 . 被视为常量 2. 的一部分
+
+	void 0 === void 1 === void(0) === undefined
+
+	NaN 是 JavaScript 中唯一一个不等于自身的值
+
+	if (!Object.is) {
+	 	Object.is = function(v1, v2) {
+		 	// 判断是否是-0
+		 	if (v1 === 0 && v2 === 0) {
+		 		return 1 / v1 === 1 / v2;
+		 	}
+		 	// 判断是否是NaN
+		 	if (v1 !== v1) {
+		 		return v2 !== v2;
+		 	}
+	 		// 其他情况
+	 		return v1 === v2;
+	 	};
+	}
+
+	function foo(x) {
+		x.push( 4 );
+		x; // [1,2,3,4]
+		// 然后
+		x = [4,5,6];
+		x.push( 7 );
+		x; // [4,5,6,7]
+	}
+	var a = [1,2,3];
+	foo( a );
+	a; // 是[1,2,3,4]，不是[4,5,6,7]
+	我们向函数传递 a 的时候，实际是将引用 a 的一个复本赋值给 x，而 a 仍然指向 [1,2,3]。
+	在函数中我们可以通过引用 x 来更改数组的值（push(4) 之后变为 [1,2,3,4]）。但 x =
+	[4,5,6] 并不影响 a 的指向，所以 a 仍然指向 [1,2,3,4]。
+
+	所有 typeof 返回值为 "object" 的对象（如数组）都包含一个内部属性 [[Class]]（我们可
+	以把它看作一个内部的分类，而非传统的面向对象意义上的类）。这个属性无法直接访问，
+	一般通过 Object.prototype.toString(..) 来查看。例如：
+	Object.prototype.toString.call( [1,2,3] );
+
+	如果想要得到封装对象中的基本类型值，可以使用 valueOf() 函数：
+	原生函数 ｜ 37
+	var a = new String( "abc" );
+	var b = new Number( 42 );
+	var c = new Boolean( true );
+	a.valueOf(); // "abc"
+	b.valueOf(); // 42
+	c.valueOf(); // true
+	在需要用到封装对象中的基本类型值的地方会发生隐式拆封。具体过程（即强制类型转
+	换）将在第 4 章详细介绍。
+	var a = new String( "abc" );
+	var b = a + ""; // b的值为"abc"
+	typeof a; // "object"
+	typeof b; // "string"
+
+	try{
+		something
+	}catch(e){
+		window.location.href = "http://stackoverflow.com/search?q=[js]+"+e.message;
+	}
+
+	~x 大致等同于 -(x+1)
+
+	~~-49.6; // -49
+
+	var a = { b: 42 };
+	var b = { b: 43 };
+	a < b; // false
+	a == b; // false
+	a > b; // false
+	a <= b; // true
+	a >= b; // true
+	强制类型转换 ｜ 91
+	为什么 a == b 的结果不是 true ？它们的字符串值相同（同为 "[object Object]"），按道
+	理应该相等才对？实际上不是这样，你可以回忆一下前面讲过的对象的相等比较。
+	但是如果 a < b 和 a == b 结果为 false，为什么 a <= b 和 a >= b 的结果会是 true 呢？
+	因为根据规范 a <= b 被处理为 b < a，然后将结果反转。因为 b < a 的结果是 false，所
+	以 a <= b 的结果是 true。
+	这可能与我们设想的大相径庭，即 <= 应该是“小于或者等于”。实际上 JavaScript 中
+
+	还有一个坑常被提到（涉及强制类型转换，参见第 4 章）：
+	[] + {}; // "[object Object]"
+	{} + []; // 0
+	表面上看 + 运算符根据第一个操作数（[] 或 {}）的不同会产生不同的结果，实则不然。
+	第一行代码中，{} 出现在 + 运算符表达式中，因此它被当作一个值（空对象）来处理。第
+	4 章讲过 [] 会被强制类型转换为 ""，而 {} 会被强制类型转换为 "[object Object]"。
+	但在第二行代码中，{} 被当作一个独立的空代码块（不执行任何操作）。代码块结尾不需
+	要分号，所以这里不存在语法上的问题。最后 + [] 将 [] 显式强制类型转换（参见第 4 章）
+	为 0。
+	[] + [];//""
+	{} + {};//NaN
+
+	Promise
+		http://www.jianshu.com/p/063f7e490e9a
+
+		Promise API
+			new Promise(..) 构造器
+			Promise.resolve(..) 和 Promise.reject(..)
+			then(..) 和 catch(..)
+			Promise.all([ .. ]) 和 Promise.race([ .. ])
+	在我们对 Web 平台 HTML5 的一个叫作 Web Worker 的新增特性的探索过程中，这些都是
+	很好的问题。这是浏览器（即宿主环境）的功能，实际上和 JavaScript 语言本身几乎没什
+	么关系。也就是说，JavaScript 当前并没有任何支持多线程执行的功能。
+	但是，像你的浏览器这样的环境，很容易提供多个 JavaScript 引擎实例，各自运行在自己
+	的线程上，这样你可以在每个线程上运行不同的程序。程序中每一个这样的独立的多线程
+	部分被称为一个（Web）Worker。这种类型的并行化被称为任务并行，因为其重点在于把
+	程序划分为多个块来并发运行。
+	从 JavaScript 主程序（或另一个 Worker）中，可以这样实例化一个 Worker：
+	var w1 = new Worker( "http://some.url.1/mycoolworker.js" );
+	这个 URL 应该指向一个 JavaScript 文件的位置（而不是一个 HTML 页面！），这个文件将
+	被加载到一个 Worker 中。然后浏览器启动一个独立的线程，让这个文件在这个线程中作
+	为独立的程序运行。	
+	结构化克隆算法（structured clone algorithm）（https://
+developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/The_structured_clone_algorithm		
+
+
+浏览器 HTTP 协议缓存机制详解:
+https://my.oschina.net/leejun2005/blog/369148
+Ajax五个readystate：
+http://www.jb51.net/article/16966.htm
+js图片懒加载【可视区域加载】
+https://www.talkingcoder.com/article/6370149516108046040
+微信、浏览器唤醒APP
+	引用lizard的'cUtilCryptBase64'模块对url编码
+	 
+	var encodeUrl = UtilCryptBase64.Base64.encode(window.location.href);
+	var awakeurl = "ctrip://wireless/h5?url=" + encodeUrl + "&type=2";
+	 
+	var si = setInterval(function () {
+	if ($(".modal-tip").text() == "仅限携程App参加活动") {
+	$(".modal-tip").text("正在跳转携程APP...");
+	}
+	if (navigator.userAgent.indexOf("MicroMessenger") > 0) {
+	//微信
+	if (window.Mkt && window.Mkt.Weixin && window.Mkt.Weixin.wxLanuch3rd) {
+	clearInterval(si);
+	window.Mkt.Weixin.wxLanuch3rd({
+	"schema": awakeurl,
+	isdown: true,
+	mktwxpageid: $("#page_id").val(),
+	callback: function () { }
+	});
+	}
+	}
+	else {//浏览器
+	clearInterval(si);
+	if (typeof window["__wakeup"] === "undefined") {
+	window["__wakeup"] = [];
+	}
+	window["__wakeup"].push({
+	'url': window.location.href,
+	'isdown': true,
+	'backurl': awakeurl,
+	'waking': function () { }
+	});
+	}
+	}, 100);
+Js二分搜索
+	function binarySearch(data, dest, start, end){  
+	    var end = end || data.length - 1,  
+	        start = start || 0,  
+	        m = Math.floor((start + end) / 2);  
+	    if(data[m] == dest){  
+	        return m;  
+	    }  
+	    if(dest < data[m]){  
+	        return binarySearch(data, dest, 0, m-1);  
+	    }else{  
+	        return binarySearch(data, dest, m+1, end);  
+	    }  
+	    
+	    return false;  
+	}  
+	var arr = [-34, 1, 3, 4, 5, 8, 34, 45, 65, 87];  
+	binarySearch(arr,4);  
+LazyMan
+	function _LazyMan(name) {
+	    this.tasks = [];   
+	    var self = this;
+	    var fn =(function(n){
+	        var name = n;
+	        return function(){
+	            console.log("Hi! This is " + name + "!");
+	            self.next();
+	        }
+	    })(name);
+	    this.tasks.push(fn);
+	    setTimeout(function(){
+	        self.next();
+	    }, 0); // 在下一个事件循环启动任务
+	}
+	/* 事件调度函数 */
+	_LazyMan.prototype.next = function() { 
+	    var fn = this.tasks.shift();
+	    fn && fn();
+	}
+	_LazyMan.prototype.eat = function(name) {
+	    var self = this;
+	    var fn =(function(name){
+	        return function(){
+	            console.log("Eat " + name + "~");
+	            self.next()
+	        }
+	    })(name);
+	    this.tasks.push(fn);
+	    return this; // 实现链式调用
+	}
+	_LazyMan.prototype.sleep = function(time) {
+	    var self = this;
+	    var fn = (function(time){
+	        return function() {
+	            setTimeout(function(){
+	                console.log("Wake up after " + time + "s!");
+	                self.next();
+	            }, time * 1000);
+	        }
+	    })(time);
+	    this.tasks.push(fn);
+	   return this;
+	}
+	_LazyMan.prototype.sleepFirst = function(time) {
+	    var self = this;
+	    var fn = (function(time) {
+	        return function() {
+	            setTimeout(function() {
+	                console.log("Wake up after " + time + "s!");
+	                self.next();
+	            }, time * 1000);
+	        }
+	    })(time);
+	    this.tasks.unshift(fn);
+	    return this;
+	}
+	/* 封装 */
+	function LazyMan(name){
+	    return new _LazyMan(name);
+	}
+XSS和CSRF的区别
+	XSS是你访问正常网站的时候，你浏览器执行了攻击者的代码。有XSS的网站可以直接伪造请求，比CSRF强多了。
+	CSRF是你点击了攻击者提供的链接的时候（正常网站或其它有攻击者代码的网站），你的浏览器向正常网站发送攻击者期望的请求。
+	http://blog.csdn.net/liushulin183/article/details/52613658
+前端优化不完全指南：
+	https://aotu.io/notes/2016/03/16/optimization/
+
+
+坑：
+
+0.1+0.2这个坑在支付上确实麻烦
+
+Chrome 中文界面下默认会将小于 12px 的文本强制按照 12px 显示, 
+  可通过加入 CSS 属性 -webkit-text-size-adjust: none; 解决.
+
+好了，下面开始罗列下这次遇到的keng们：
+
+开始之前先来描述下页面的结构：
+
+<div class='header'>....</div>
+<div class='main'>....</div>
+<div class='footer'>
+    <textarea></textarea>
+</div>
+其实就是最基本的上中下布局而已，问题是header和footer需要分别fixed到头部和底部
+
+0.首页就是fixed定位的问题
+
+遇到的都知道在ios的safari里面不支持position:fixed;(呵呵了),其实也不算是不支持，只是在软键盘弹出来的时候使用fixed的元素就开始各种抽风了。
+
+解决方法：在键盘弹出来之前按照正常的定位，使用fixed，弹出来的时候将footer这部分position:static;然后这样footer就会跑向页面的最下面了，然后再将页面主动滚动到底部。当blur的时候再把footer设置回去
+
+1.textarea的focus问题
+
+这次有个需求是点击main的某个元素，需要textarea获取焦点并弹出软键盘。其实这些都不是关键。问题是在点击main的该元素的时候，还是需要跑个ajax判断下能否进行评论，这样一跑ajax就获取不了焦点了。
+
+解决方法：其实为啥使用了oTextarea.focus()不管用，其实就是中间的这层ajax使用了异步了。这样浏览器以为这是两件事，处于安全性考虑它给禁止了，然后将ajax改成同步的就OK了。
+
+同样在window.open()的时候也会遇到这个问题，解法相同。
+
+2.在特定的android的机子(vivo…)里，在键盘收起来不会失焦
+
+本来是在失焦的时候触发了一个blur事件的东西，这样就会出现问题。
+
+解决方法：
+
+(function() {
+    var height = window.innerHeight;
+    function loop_height() {
+        setTimeout(function() {
+            if(window.innerHeight > height + 200){
+                //触发blur事件
+            }else{
+                height = window.height;
+            }
+        },1000);
+    }
+    loop_height();
+})();
+其实就是一直获取页面的可视高度，在键盘弹出来的时候键盘的部分不算innerHeight;这样在键盘收起来的时候就能知道了，如果感觉时间比较长可以把setTimeout的时间改小一点，默认在少于300ms的时候感觉不出页面的迟钝。
+
+3.在微信内zepto的方法不触发(偶发)
+
+这个还真是难为了测试妹子了，没想到还有这种
+
+解决方法：这个大家就都知道了，改成原生的就成了呗
+
+4.在微信内textarea focus的时候弹出键盘，会遮盖一部分textarea的元素(偶发,特定机型)
+
+解决方法：在focus事件的最后
+
+$body.scrollTop($body.get(0).scrollHeight + $("textarea").height());
+就是让页面主动滚动下，反正textarea在最底部，那么就把页面滚动到最底下就成了
+
+5.IOS上带-的日期，new Date时会出错
+
+6.微信分享from参数
+
+7.revert merge会导致下次merge无效
+http://www.tuicool.com/articles/iIzeY3e
 ```
