@@ -4707,6 +4707,30 @@ numbers.reduce(function(prev,cur,index,array){
 	return prev + cur;
 })
 //15
+//应用
+有一个长度为100的数组，请以优雅的方式求出该数组的前10个元素之和
+分析：其实，对于数组求和有很多种方法，也很简单。但是，这题有两个限制条件：优雅的方式、前10个元素。对于“前10个元素”这个限制条件可以使用Array.prototype.slice()方法来截取，对于"优雅的方式"，我的理解是应该尽可能使用数组自带的方法，最好可以使用高阶函数！所以我觉得应该是Array.prototype.reduce()方法。代码如下：
+
+var a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+sum = 0;
+
+sum = a.slice(0, 10).reduce(function(pre, current) {
+　　return pre + current;
+});
+
+console.log(sum); //55
+
+实现对数组进行乱序
+var a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    sign = 1; 
+a.sort(function(a, b) {
+    //因为Math.random产生的数在0-1之间
+    //所以0.5两边的概率是相等的
+    //大于0.5时为升序，小于0.5时为降序
+    sign = (Math.random() > 0.5) ? 1 : -1;
+    return (a - b) * sign;
+
+});
 
 Date
 ES5 新增了Date.now()可以获取当前时间的毫秒数
@@ -4839,36 +4863,101 @@ Object.getOwnPropertyNames(a.prototype)//constructor,name
 window location navigator screen history
 location.assign("http://baudu.com") === location.href = "http://baudu.com" === window.location = "http://baudu.com"
 
-Node类型(nodeType )
-Node.ELEMENT_NODE 1
-Node.ATTRIBUTE_NODE 2
-Node.TEXT_NODE 3
-Node.ENTITY_REFERENCE_NODE 5
-Node.ENTITY_NODE 6
-Node.PROCESSING_INSTRUCTION_NODE 7
-Node.COMMENT_NODE 8
-Node.DOCUMENT_NODE 9
-Node.DOCUMENT_TYPE_NODE 10
-Node.DOCUMENT_FRAGMENT_NODE 11
-Node.NOTATION_NODE 12
-
-NodeList转为数组
-var arratNodes = Array.prototype.slice.call(someNode.childNodes,0)
+.nodeType .nodeName
+节点操作
 appendChild()
 insertBefore()
 replaceChild()
 removeChild()
 cloneNode()//true、false深、浅复制
-document是HTMLDocument（继承自Document类型）的实例
-document.documentElement//取得对<html>的引用
-document.body//取得对<body>的引用
+节点关系
+childNodes
+firstChild
+lastChild
+parentNode
+nextSibling
+previousSibling
 
-document.getElementByTagName(),返回HTMLCollection对象
-<img src="xx.jpg" name="myImg">
-var images = document.getElementByTagName("img")
-images[0].src images.item(0).src
-var myImg = images.namedItem("myImg")
-images["myImg"]
+Node类型(nodeType)
+Node.ELEMENT_NODE 1
+	HTML
+		HTMLElement:
+			id
+			title
+			lang 元素语言代码
+			dir
+			className
+		var div = document.getElementById("div")
+		alert(div.id)
+		alert(div.className)
+		....
+	取得特性
+		var div = document.getElementById("div")
+		document.getAttribute("id")
+		document.getAttribute("class")
+		document.getAttribute("title")
+	设置特性
+		document.setAttribute("id",'111')
+	删除特性
+		document.removeAttribute("id")
+	attributes
+		Element类型是使用attributes属性唯一一个DOM节点类型
+		attributes属性包含一个NamedNodeMap，与NodeList类似
+		元素每个特性都由一个Attr节点表示
+		每个节点保存在NamedNodeMap，NameNodeMap：
+			getNamedItem(name) 返回nodeName属性等于name的节点
+			removeNamedItem(name) 列表中移除nodeName属性等于name
+			setNamedItem(node) 列表添加节点，节点的nodeName为索引
+			item(pos) 返回数字pos处的节点
+		var value = element.attributes.getNamedItem("id").nodeValue
+		相当于 element.getAttribute("id")
+		var name = element.attributes.getNamedItem("id").nodeName
+	创建元素 
+		document.createElement
+Node.ATTRIBUTE_NODE 2
+	Attr元素特性，对应三个属性
+		name 特性名称
+		value 特性值
+		specified 区别特性是在代码中指定的
+	var attr = document.createAttribute("align")
+	attr.value = "left"
+	element.setAttributeNode(attr)
+	alert(elemnt.attributes["align"].value)//left
+	alert(elemnt.getAttributeNode("align").value)//left
+	alert(elemnt.getAttribute("align"))//left
+Node.TEXT_NODE 3
+	document.createTextNode
+	normalize()//合并相邻文本节点
+	splitText()//将一个文本节点拆分成两个文本节点
+Node.CDATA_SECTION_NODE 4
+Node.ENTITY_REFERENCE_NODE 5
+Node.ENTITY_NODE 6
+Node.PROCESSING_INSTRUCTION_NODE 7
+Node.COMMENT_NODE 8
+Node.DOCUMENT_NODE 9
+	document是HTMLDocument（继承自Document类型）的实例
+	document.documentElement//取得对<html>的引用
+	document.body//取得对<body>的引用
+	查找元素
+		getElementById
+		getElementsByTagName
+			NodeList
+			document.getElementByTagName(),返回HTMLCollection对象
+			<img src="xx.jpg" name="myImg">
+			var images = document.getElementByTagName("img")
+			images[0].src images.item(0).src
+			var myImg = images.namedItem("myImg")
+			images["myImg"]
+Node.DOCUMENT_TYPE_NODE 10
+	<DOCTYPE　HTML>
+Node.DOCUMENT_FRAGMENT_NODE 11
+	document.createDocumentFragment
+Node.NOTATION_NODE 12
+
+NodeList转为数组
+var arratNodes = Array.prototype.slice.call(someNode.childNodes,0)
+
+
 
 element
 getAttribute()
@@ -5123,6 +5212,17 @@ o.foo(); // 3
 者o.foo()。根据我们之前说过的，这里会应用默认绑定。
 
 
+new到底发生了什么
+
+还是我们上面的问题,当我们执行 var a = new A('testa') 到底发生了什么.MDN上是这么说的
+
+对于 var o = new Foo();
+//JavaScript 实际上执行的是：
+var o = new Object();
+o.[[Prototype]] = Foo.prototype;
+Foo.call(o);
+
+
 
 思考下面的代码：
 function Foo() { /* .. */ }
@@ -5326,7 +5426,7 @@ console.log(a.toLocaleString()); // '123,123,123,123,123'
 
 
 判等
-x	y	==	===	Object.is
+x	y	==	===	Object.is(x,y)
 +0	-0	true	true	false
 NaN	NaN	false	false	true
 
@@ -5836,6 +5936,8 @@ Ajax五个readystate：
 http://www.jb51.net/article/16966.htm
 js图片懒加载【可视区域加载】
 https://www.talkingcoder.com/article/6370149516108046040
+JavaScript函数节流和函数防抖之间的区别
+http://www.jianshu.com/p/b73c2acad696?utm_campaign=hugo&utm_medium=reader_share&utm_content=note
 微信、浏览器唤醒APP
 	引用lizard的'cUtilCryptBase64'模块对url编码
 	 
@@ -5888,7 +5990,52 @@ Js二分搜索
 	    return false;  
 	}  
 	var arr = [-34, 1, 3, 4, 5, 8, 34, 45, 65, 87];  
-	binarySearch(arr,4);  
+	binarySearch(arr,4); 
+堆排序:(https://github.com/hustcc/JS-Sorting-Algorithm/blob/master/7.heapSort.md)
+	var len;    // 因为声明的多个函数都需要数据长度，所以把len设置成为全局变量
+
+	function buildMaxHeap(arr) {   // 建立大顶堆
+	    len = arr.length;
+	    for (var i = Math.floor(len/2); i >= 0; i--) {
+	        heapify(arr, i);
+	    }
+	}
+
+	function heapify(arr, i) {     // 堆调整
+	    var left = 2 * i + 1,
+	        right = 2 * i + 2,
+	        largest = i;
+
+	    if (left < len && arr[left] > arr[largest]) {
+	        largest = left;
+	    }
+
+	    if (right < len && arr[right] > arr[largest]) {
+	        largest = right;
+	    }
+
+	    if (largest != i) {
+	        swap(arr, i, largest);
+	        heapify(arr, largest);
+	    }
+	}
+
+	function swap(arr, i, j) {
+	    var temp = arr[i];
+	    arr[i] = arr[j];
+	    arr[j] = temp;
+	}
+
+	function heapSort(arr) {
+	    buildMaxHeap(arr);
+
+	    for (var i = arr.length-1; i > 0; i--) {
+	        swap(arr, 0, i);
+	        len--;
+	        heapify(arr, 0);
+	    }
+	    return arr;
+	}
 LazyMan
 	function _LazyMan(name) {
 	    this.tasks = [];   
@@ -5957,7 +6104,21 @@ XSS和CSRF的区别
 	http://blog.csdn.net/liushulin183/article/details/52613658
 前端优化不完全指南：
 	https://aotu.io/notes/2016/03/16/optimization/
+Underscore _.template 方法使用详解
+	https://github.com/hanzichi/underscore-analysis/issues/26
+		_.template 支持以下三种模板。
 
+			1. <%  %> - to execute some code
+			2. <%= %> - to print some value in template
+			3. <%- %> - to print some values HTML escaped
+		如果你不喜欢它默认的模板风格，也可以自己定义，注意 key 必须和源码中的 key 保持一致，才能覆盖。
+
+		_.templateSettings = {
+		  // 三种渲染模板
+		  evaluate    : /<%([\s\S]+?)%>/g,
+		  interpolate : /<%=([\s\S]+?)%>/g,
+		  escape      : /<%-([\s\S]+?)%>/g
+		};
 
 坑：
 
@@ -6031,4 +6192,7 @@ $body.scrollTop($body.get(0).scrollHeight + $("textarea").height());
 
 7.revert merge会导致下次merge无效
 http://www.tuicool.com/articles/iIzeY3e
+
+
+
 ```
